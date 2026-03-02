@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.urls import reverse
 from rango.models import Category, Page
-from rango.forms import CategoryForm, PageForm
+from rango.forms import PageForm
+# CategoryForm imported inside views where needed to avoid NameError in test context
 
 def index(request):
     category_list = Category.objects.order_by('-likes')[:5]
@@ -26,6 +27,8 @@ def show_category(request, category_name_slug):
     return render(request, 'rango/category.html', context=context_dict)
 
 def add_category(request):
+    # import here to guarantee the name exists when tests reload the module
+    from rango.forms import CategoryForm
     form = CategoryForm()
     if request.method == 'POST':
         form = CategoryForm(request.POST)
@@ -46,6 +49,8 @@ def add_page(request, category_name_slug):
         return redirect('/rango/')
 
     form = PageForm()
+    # ensure CategoryForm imported in this scope as well (though not used here)
+    from rango.forms import CategoryForm  # noqa: F401
     if request.method == 'POST':
         form = PageForm(request.POST)
         if form.is_valid():
